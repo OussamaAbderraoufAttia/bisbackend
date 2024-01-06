@@ -1,0 +1,18 @@
+import React, { useState, useEffect } from 'react';
+import Navbar from "../component/Navbar";
+import DragDropImageUploader from "../component/DragDropImageUploader";
+
+export const Bis = () => {
+
+  
+
+  return (
+    <div className="w-full min-h-screen font-[poppins]">
+      <div className="container">
+        <Navbar />
+      </div>
+      <DragDropImageUploader />
+      <img src="..\assets\results.png" />
+    </div>
+  );
+};

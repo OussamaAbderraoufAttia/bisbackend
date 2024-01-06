@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Prediction</title>
+</head>
+<body>
+    <h1>Image Prediction</h1>
+    <input type="file" id="imageData" >
+    <button onclick="predict()">Predict</button>
+
+    <script>
+        function predict() {
+            const imageData = document.getElementById('imageData').value;
+            const encodedImage = encodeURIComponent(imageData);
+
+            // Perform GET request to Flask server
+            fetch(`/predict?image=${encodedImage}`)
+                .then(response => response.text())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

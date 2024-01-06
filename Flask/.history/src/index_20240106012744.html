@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Prediction</title>
+</head>
+<body>
+    <h1>Image Prediction</h1>
+    <input type="file" id="imageData" >
+    <button onclick="predict()">Predict</button>
+
+    <script>
+        function predict() {
+        const imageData = document.getElementById('imageData');
+    const file = imageData.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    // Perform POST request to Flask server
+    fetch('/predict', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(data => console.log(data))
+    .catch(error => console.error('Error:', error));
+}
+
+    </script>
+</body>
+</html>

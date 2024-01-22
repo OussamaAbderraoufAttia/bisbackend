@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 
 import cv2
-from PIL import Image
 import numpy as np
 from tensorflow.keras.models import load_model
 import aspose.words as aw
@@ -14,34 +13,11 @@ CORS(app, resources={r"/predict_image": {"origins": "*"}})  # Set CORS for speci
 ImgHeight = 256  # Set your desired image height
 ImgWidth = 256  # Set your desired image width
 
-
-
-
-
 # Path to your saved model
 model_path = 'model-brain-mri.h5'
 
-
-
-
-
-
-
 # Load the model
 model = load_model(model_path)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 def predict_and_return_tif(image_data, save_path):
     # Convert the received image data to a numpy array
@@ -61,69 +37,7 @@ def predict_and_return_tif(image_data, save_path):
 
     # Save the visualization as a TIFF image using OpenCV
     cv2.imwrite(save_path, cv2.cvtColor(np.squeeze(binary_prediction) * 255, cv2.COLOR_GRAY2BGR))
-    return save_path
-
-
-
-
-
-
-
-
-
-def predict_and_return_png_paths(image_data, save_path_input_png, save_path_results_png):
-    try:
-        # Convert image data to numpy array
-        nparr = np.frombuffer(image_data.read(), np.uint8)
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-        # Print data types for debugging
-        print("Image data type:", image.dtype)  # Check initial data type
-
-        # Preprocess and predict
-        resized_image = cv2.resize(image, (ImgHeight, ImgWidth))
-        input_image = resized_image / 255
-        input_image = input_image[np.newaxis, :, :, :]  # Add batch dimension
-        prediction = model.predict(input_image)
-        binary_prediction = (prediction > 0.5).astype(np.uint8)
-
-        # Save TIFF image using OpenCV (if needed)
-        tiff_save_path = "../Client/src/assets/results.tif"
-        cv2.imwrite(tiff_save_path, cv2.cvtColor(np.squeeze(binary_prediction) * 255, cv2.COLOR_GRAY2BGR))
-
-        # Ensure RGB format for Pillow
-        if len(image.shape) == 2:  # Convert grayscale to RGB if needed
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-
-        # Save input image as PNG using Pillow
-        img_input = Image.fromarray(image)
-        print("img_input shape:", img_input.size)  # Check image dimensions
-        img_input.save(save_path_input_png, format="PNG")
-        # Threshold the probability map
-        threshold = 0.5  # Adjust as needed
-        binary_prediction = (binary_prediction.squeeze() > threshold).astype(np.uint8) * 255
-
-        # Save the binary image using Pillow
-        try:
-            # Ensure the array is in the correct data type
-            img_results = Image.fromarray(binary_prediction, mode="L")
-            img_results.save(save_path_results_png, format="PNG")
-            print("Results PNG saved successfully!")
-        except Exception as e:
-            print(f"Error saving results PNG: {e}")
-
-
-        return save_path_input_png, save_path_results_png
-
-    except Exception as e:
-        print(f"Error during image processing and saving: {e}")
-        return None, None  # Return None to indicate failure
-
-
-
-
-
-
+    return save_path, binary_prediction
 
 def detect_tumor_color(image_path, color_threshold):
     # Load the image
@@ -146,15 +60,6 @@ def detect_tumor_color(image_path, color_threshold):
         return "No Tumor"
 
 
-
-
-
-
-
-
-
-
-
 def calculate_tumor_size(image_path):
     # Load the segmented tumor image
     tumor_image = cv2.imread(image_path)
@@ -172,18 +77,6 @@ def calculate_tumor_size(image_path):
     tumor_area = cv2.contourArea(contours[0]) if contours else 0
 
     return tumor_area
-
-
-
-
-
-
-
-
-
-
-
-
 
 def analyze_tumor_shape(image_path):
     # Load the segmented tumor image
@@ -225,12 +118,6 @@ def analyze_tumor_shape(image_path):
     }
 
 
-
-
-
-
-
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -241,6 +128,8 @@ def index():
         image_file = request.files['image']
         save_path = "path_to_save_result.tif"
 
+
+
         # Call the function to predict and save the TIFF image
         saved_image_path = predict_and_return_tif(image_file, save_path)
 
@@ -248,56 +137,43 @@ def index():
 
     return render_template('index.html')
 
-
-
-
-
-
-
-
-
-
-
-
 @app.route('/predict_image', methods=['POST'])
 def predict_image():
-    try:
-        # For internal use: trigger the prediction directly from this endpoint
-        if 'image' not in request.files:
-            return jsonify({'error': 'No image part in the request'})
+    # For internal use: trigger the prediction directly from this endpoint
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image part in the request'})
+    
+    image_file = request.files['image']
+    save_path = "../Client/src/assets/results.tif"
+    saved_image_path, img_results = predict_and_return_tif(image_file, save_path)
 
-        image_file = request.files['image']
-        saved_image_path = "../Client/src/assets/results.tif"
         
-        input_png_path = "../Client/src/assets/input.png"  # Adjust path as needed
-        results_png_path = "../Client/src/assets/results.png"  # Adjust path as needed
+    
 
-        input_png_path, results_png_path = predict_and_return_png_paths(image_file, input_png_path, results_png_path)
-       
-        color_threshold = 0.00001  
-        result = detect_tumor_color(saved_image_path, color_threshold)
-        size = calculate_tumor_size(saved_image_path)
-        shape_properties = analyze_tumor_shape(saved_image_path)
-        
-        response = {
-            'status': 200,
-            'message': 'Prediction completed and the results are ready',
-            'image_path': input_png_path,
-            'results_path': results_png_path,
-            'result': result,
-            'size': size,  # Assuming 'size' is a variable holding the tumor size
-            'shape_properties': shape_properties  # Adding the shape properties here
-        }
+    cv2.imwrite("results.jpg", img_results)  # OpenCV only supports JPEG for web formats
+    cv2.imwrite("inputs.jpg", image_file)
 
-    except Exception as e:
-        # If an exception occurs, set 'status' to 'error' and include an error message
-        response = {
-            'status': 'error',
-            'message': f'An error occurred: {str(e)}'
-        }
+    
+
+   
+
+   
+
+
+    color_threshold = 0.00001  
+    result = detect_tumor_color(save_path, color_threshold)
+    size = calculate_tumor_size(save_path)
+    shape_properties = analyze_tumor_shape(save_path)
+    
+    response = {
+        'message': 'Prediction completed and saved as TIFF image',
+        'image_path': saved_image_path,
+        'result': result,
+        'size': size,  # Assuming 'size' is a variable holding the tumor size
+        'shape_properties': shape_properties  # Adding the shape properties here
+    }
 
     return jsonify(response)
-
 
 if __name__ == '__main__':
     app.run(port=3000, debug=True)

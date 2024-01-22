@@ -24,6 +24,7 @@ function DragDropImageUploader() {
     }
   }, [response]);
 
+
   function selectFiles() {
     fileInputRef.current.click();
   }
@@ -49,7 +50,6 @@ function DragDropImageUploader() {
     setImages((prevImages) =>
       prevImages.filter((_, i) => i !== index)
     );
-    setImagesContainerKey((prevKey) => prevKey + 1); // Update the key when deleting an image
   }
 
   function onDragOver(event) {
@@ -86,7 +86,7 @@ function DragDropImageUploader() {
   function uploadImages() {
     if (selectedImage) {
       setIsLoading(true);
-      setResponse(null);
+
       const formData = new FormData();
       formData.append('image', selectedImage);
 
@@ -128,7 +128,6 @@ function DragDropImageUploader() {
       console.log('No image selected for upload');
     }
   }
-
   return (
     <div className="flex justify-center items-center h-screen bg-[#f5f5f5]">
       <div className="card p-4 shadow-lg rounded-md overflow-hidden min-w-[600px] bg-white">
@@ -204,6 +203,6 @@ function DragDropImageUploader() {
       </div>
     </div>
   );
-}
+  
 
 export default DragDropImageUploader;

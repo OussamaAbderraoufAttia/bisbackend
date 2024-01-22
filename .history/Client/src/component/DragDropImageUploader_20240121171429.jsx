@@ -86,7 +86,7 @@ function DragDropImageUploader() {
   function uploadImages() {
     if (selectedImage) {
       setIsLoading(true);
-      setResponse(null);
+
       const formData = new FormData();
       formData.append('image', selectedImage);
 

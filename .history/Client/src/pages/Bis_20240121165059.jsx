@@ -6,10 +6,13 @@ import PlotResults from '../component/PlotResults';
 
 export const Bis = () => {
   const [predictionResponse, setPredictionResponse] = useState(null);
+  const [plotResultsKey, setPlotResultsKey] = useState(Date.now()); // Use timestamp as the initial key
 
   // Function to handle the prediction response
   const handlePredictionResponse = (response) => {
     setPredictionResponse(response);
+    // Update key with a new timestamp only when a new prediction is made
+    setPlotResultsKey((prevKey) => (response ? Date.now() : prevKey));
   };
 
   return (
@@ -17,8 +20,14 @@ export const Bis = () => {
       <div className="container relative z-10">
         <Navbar />
       </div>
-      <DragDropImageUploader onPredictionResponse={handlePredictionResponse} />
-      
+      <div className="container relative z-10">
+        <DragDropImageUploader onPredictionResponse={handlePredictionResponse} />
+        {predictionResponse && predictionResponse.status === 200 && (
+          <div className="relative">
+            <PlotResults key={plotResultsKey} response={predictionResponse} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

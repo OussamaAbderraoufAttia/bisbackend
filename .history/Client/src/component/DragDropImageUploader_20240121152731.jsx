@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
-import PlotResults from './PlotResults';
+import React, { useState, useRef } from 'react';
 
 function checkIfTif(fileName) {
   const extension = fileName.split('.').pop();
@@ -11,18 +10,7 @@ function DragDropImageUploader() {
   const [isDragging, setIsDragging] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [notification, setNotification] = useState(null);
-  const [response, setResponse] = useState(null);
   const fileInputRef = useRef(null);
-  const [imagesContainerKey, setImagesContainerKey] = useState(0);
-
-  useEffect(() => {
-    // This effect runs whenever the response changes
-    if (response && response.status === 200) {
-      setImages([]); // Clear images after successful prediction
-      setImagesContainerKey((prevKey) => prevKey + 1); // Change the key to force re-render
-    }
-  }, [response]);
 
   function selectFiles() {
     fileInputRef.current.click();
@@ -49,13 +37,12 @@ function DragDropImageUploader() {
     setImages((prevImages) =>
       prevImages.filter((_, i) => i !== index)
     );
-    setImagesContainerKey((prevKey) => prevKey + 1); // Update the key when deleting an image
   }
 
   function onDragOver(event) {
     event.preventDefault();
     setIsDragging(true);
-    event.dataTransfer.dropEffect = 'copy';
+    event.dataTransfer.dropEffect = "copy";
   }
 
   function onDragLeave(event) {
@@ -86,10 +73,10 @@ function DragDropImageUploader() {
   function uploadImages() {
     if (selectedImage) {
       setIsLoading(true);
-      setResponse(null);
+  
       const formData = new FormData();
       formData.append('image', selectedImage);
-
+  
       fetch('http://127.0.0.1:3000/predict_image', {
         method: 'POST',
         body: formData,
@@ -101,76 +88,68 @@ function DragDropImageUploader() {
         })
         .then(({ status, data }) => {
           console.log('Upload response:', data);
-
-          // Display notification based on status
-          setNotification({
-            type: status === 200 ? 'success' : 'error',
-            message: status === 200 ? data.message : `Error (${status}): ${data.message}`,
-          });
-
-          // Set the response data for further use
-          setResponse({ status, data });
+  
+          // Check the status field in the response
+          if (status === 200) {
+            // Display success notification
+            // You can use a notification library or a simple alert for demonstration purposes
+            alert(data.message);
+  
+            // Additional handling for other response data
+          } else {
+            // Display error notification
+            alert(`Error (${status}): ${data.message}`);
+  
+            // Handle error scenarios if needed
+          }
         })
         .catch((error) => {
           console.error('Upload error:', error);
           // Display a general error notification
-          setNotification({
-            type: 'error',
-            message: 'An error occurred during the upload.',
-          });
+          alert('An error occurred during the upload.');
         })
         .finally(() => {
           setIsLoading(false);
-          // Clear notification after 5 seconds
-          setTimeout(() => setNotification(null), 5000);
         });
     } else {
       console.log('No image selected for upload');
     }
   }
+  
+  
 
   return (
-    <div className="flex justify-center items-center h-screen bg-[#f5f5f5]">
-      <div className="card p-4 shadow-lg rounded-md overflow-hidden min-w-[600px] bg-white">
-        <div className="top text-center">
-          <p className="font-semibold text-[#166873] text-lg">Drag & Drop Image Uploading </p>
+    <div className='flex justify-center items-center h-screen bg-[#f5f5f5]'>
+      <div className='card p-4 shadow-lg rounded-md overflow-hidden min-w-[600px] bg-white'>
+        <div className='top text-center'>
+          <p className='font-semibold text-[#166873] text-lg'>Drag & Drop Image Uploading </p>
         </div>
         <div
-          className="drag-area h-36 p-2 rounded border-2 border-dashed
-          border-[#2a8895] text-[#868585e5] bg-blue-gray-50 flex justify-center items-center select-none mt-2 bg-[#F7FDFF]"
-          onDragOver={onDragOver}
-          onDragLeave={onDragLeave}
-          onDrop={onDrop}
+          className='drag-area h-36 p-2 rounded border-2 border-dashed
+          border-[#2a8895] text-[#868585e5] bg-blue-gray-50 flex justify-center items-center select-none mt-2 bg-[#F7FDFF]'
+          onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
         >
           {isDragging ? (
-            <span className="select text-purple-800 ml-1 cursor-pointer transition duration-400  hover:opacity-60">
-              {' '}
-              Drag Drop Here{' '}
-            </span>
+            <span className='select text-purple-800 ml-1 cursor-pointer transition duration-400  hover:opacity-60'> Drag Drop Here </span>
           ) : (
             <>
-              Drag & Drop Image or{' '}
+              Drag & Drop Image or{" "}
               <span
-                className="select text-[#2A8895] font-bold ml-1 cursor-pointer transition duration-400  hover:opacity-60"
-                role="button"
+                className='select text-[#2A8895] font-bold ml-1 cursor-pointer transition duration-400  hover:opacity-60'
+                role='button'
                 onClick={selectFiles}
               >
                 Click Here
               </span>
             </>
           )}
-          <input name="file" type="file" className="file hidden" multiple ref={fileInputRef} onChange={onFileSelect} />
+          <input name='file' type='file' className='file hidden' multiple ref={fileInputRef} onChange={onFileSelect} />
         </div>
-        <div className={`container w-full h-auto flex justify-start items-start flex-wrap max-h-52 overflow-y-auto mt-2`} key={imagesContainerKey}>
+        <div className="container w-full h-auto flex justify-start items-start flex-wrap max-h-52 overflow-y-auto mt-2">
           {images.map((image, index) => (
-            <div className="image w-20 mr-1 h-20 relative mb-2 p-2 rounded bg-blue-gray-50" key={index}>
-              <span
-                className="delete absolute top-[-3px] right-1 text-xl cursor-pointer z-[999]"
-                onClick={() => deleteImage(index)}
-              >
-                &times;
-              </span>
-              <img src={image.url} alt={image.name} className="w-full h-full rounded" />
+            <div className='image w-20 mr-1 h-20 relative mb-2 p-2 rounded bg-blue-gray-50' key={index}>
+              <span className='delete absolute top-[-3px] right-1 text-xl cursor-pointer z-[999]' onClick={() => deleteImage(index)}>&times;</span>
+              <img src={image.url} alt={image.name} className='w-full h-full rounded' />
             </div>
           ))}
         </div>
@@ -189,18 +168,6 @@ function DragDropImageUploader() {
             'Predict'
           )}
         </button>
-        {notification && (
-          <div
-            className={`mt-4 py-2 px-4 rounded ${
-              notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            } text-white`}
-          >
-            {notification.message}
-          </div>
-        )}
-        {response && (
-          <PlotResults response={response} />
-        )}
       </div>
     </div>
   );

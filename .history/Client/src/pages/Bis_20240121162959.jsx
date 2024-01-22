@@ -18,7 +18,11 @@ export const Bis = () => {
         <Navbar />
       </div>
       <DragDropImageUploader onPredictionResponse={handlePredictionResponse} />
-      
+      {predictionResponse && predictionResponse.status === 200 && (
+        <div className="relative">
+          <PlotResults response={predictionResponse} />
+        </div>
+      )}
     </div>
   );
 };

@@ -17,8 +17,14 @@ export const Bis = () => {
       <div className="container relative z-10">
         <Navbar />
       </div>
-      <DragDropImageUploader onPredictionResponse={handlePredictionResponse} />
-      
+      <div className="container relative z-10">
+        <DragDropImageUploader onPredictionResponse={handlePredictionResponse} />
+        {predictionResponse && predictionResponse.status === 200 && (
+          <div className="relative">
+            <PlotResults response={predictionResponse} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

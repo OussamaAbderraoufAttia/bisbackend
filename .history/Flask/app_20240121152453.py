@@ -282,8 +282,7 @@ def predict_image():
         response = {
             'status': 200,
             'message': 'Prediction completed and the results are ready',
-            'image_path': input_png_path,
-            'results_path': results_png_path,
+            'image_path': saved_image_path,
             'result': result,
             'size': size,  # Assuming 'size' is a variable holding the tumor size
             'shape_properties': shape_properties  # Adding the shape properties here

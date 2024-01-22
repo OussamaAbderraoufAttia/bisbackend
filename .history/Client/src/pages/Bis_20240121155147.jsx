@@ -13,12 +13,12 @@ export const Bis = () => {
   };
 
   return (
-    <div className="w-full min-h-screen font-[poppins] relative">
-      <div className="container relative z-10">
+    <div className="w-full min-h-screen font-[poppins]">
+      <div className="container">
         <Navbar />
       </div>
       <DragDropImageUploader onPredictionResponse={handlePredictionResponse} />
-      
+      {predictionResponse && <PlotResults response={predictionResponse} />}
     </div>
   );
 };

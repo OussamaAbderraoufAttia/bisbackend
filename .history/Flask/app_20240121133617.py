@@ -71,6 +71,7 @@ def predict_and_return_tif(image_data, save_path):
 
 
 
+
 def predict_and_return_png_paths(image_data, save_path_input_png, save_path_results_png):
     try:
         # Convert image data to numpy array
@@ -88,8 +89,7 @@ def predict_and_return_png_paths(image_data, save_path_input_png, save_path_resu
         binary_prediction = (prediction > 0.5).astype(np.uint8)
 
         # Save TIFF image using OpenCV (if needed)
-        tiff_save_path = "../Client/src/assets/results.tif"
-        cv2.imwrite(tiff_save_path, cv2.cvtColor(np.squeeze(binary_prediction) * 255, cv2.COLOR_GRAY2BGR))
+        cv2.imwrite("results.tif", cv2.cvtColor(np.squeeze(binary_prediction) * 255, cv2.COLOR_GRAY2BGR))
 
         # Ensure RGB format for Pillow
         if len(image.shape) == 2:  # Convert grayscale to RGB if needed
@@ -99,25 +99,35 @@ def predict_and_return_png_paths(image_data, save_path_input_png, save_path_resu
         img_input = Image.fromarray(image)
         print("img_input shape:", img_input.size)  # Check image dimensions
         img_input.save(save_path_input_png, format="PNG")
-        # Threshold the probability map
-        threshold = 0.5  # Adjust as needed
-        binary_prediction = (binary_prediction.squeeze() > threshold).astype(np.uint8) * 255
 
-        # Save the binary image using Pillow
+        # Reshape and convert data type for Pillow compatibility
+        binary_prediction = binary_prediction.squeeze(axis=0).astype(np.uint8)
+
+        # Explicit RGB conversion if needed
+        if len(binary_prediction.shape) == 2:
+            binary_prediction = cv2.cvtColor(binary_prediction, cv2.COLOR_GRAY2RGB)
+
+        # Enhanced error handling for saving
         try:
-            # Ensure the array is in the correct data type
-            img_results = Image.fromarray(binary_prediction, mode="L")
+            # Explicitly specify mode as 'RGB' for saving
+            img_results = Image.fromarray(binary_prediction, mode="RGB")
             img_results.save(save_path_results_png, format="PNG")
             print("Results PNG saved successfully!")
         except Exception as e:
             print(f"Error saving results PNG: {e}")
-
 
         return save_path_input_png, save_path_results_png
 
     except Exception as e:
         print(f"Error during image processing and saving: {e}")
         return None, None  # Return None to indicate failure
+
+
+
+
+
+
+
 
 
 
@@ -259,45 +269,35 @@ def index():
 
 
 
+
 @app.route('/predict_image', methods=['POST'])
 def predict_image():
-    try:
-        # For internal use: trigger the prediction directly from this endpoint
-        if 'image' not in request.files:
-            return jsonify({'error': 'No image part in the request'})
+    # For internal use: trigger the prediction directly from this endpoint
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image part in the request'})
+    
+    image_file = request.files['image']
+    saved_image_path = "../Client/src/assets/results.tif"
+    
+    input_png_path = "../Client/src/assets/input.png"  # Adjust path as needed
+    results_png_path = "../Client/src/assets/results.png"  # Adjust path as needed
 
-        image_file = request.files['image']
-        saved_image_path = "../Client/src/assets/results.tif"
-        
-        input_png_path = "../Client/src/assets/input.png"  # Adjust path as needed
-        results_png_path = "../Client/src/assets/results.png"  # Adjust path as needed
-
-        input_png_path, results_png_path = predict_and_return_png_paths(image_file, input_png_path, results_png_path)
-       
-        color_threshold = 0.00001  
-        result = detect_tumor_color(saved_image_path, color_threshold)
-        size = calculate_tumor_size(saved_image_path)
-        shape_properties = analyze_tumor_shape(saved_image_path)
-        
-        response = {
-            'status': 200,
-            'message': 'Prediction completed and the results are ready',
-            'image_path': input_png_path,
-            'results_path': results_png_path,
-            'result': result,
-            'size': size,  # Assuming 'size' is a variable holding the tumor size
-            'shape_properties': shape_properties  # Adding the shape properties here
-        }
-
-    except Exception as e:
-        # If an exception occurs, set 'status' to 'error' and include an error message
-        response = {
-            'status': 'error',
-            'message': f'An error occurred: {str(e)}'
-        }
+    input_png_path, results_png_path = predict_and_return_png_paths(image_file, input_png_path, results_png_path)
+   
+    color_threshold = 0.00001  
+    result = detect_tumor_color(saved_image_path, color_threshold)
+    size = calculate_tumor_size(saved_image_path)
+    shape_properties = analyze_tumor_shape(saved_image_path)
+    
+    response = {
+        'message': 'Prediction completed and saved as TIFF image',
+        'image_path': saved_image_path,
+        'result': result,
+        'size': size,  # Assuming 'size' is a variable holding the tumor size
+        'shape_properties': shape_properties  # Adding the shape properties here
+    }
 
     return jsonify(response)
-
 
 if __name__ == '__main__':
     app.run(port=3000, debug=True)

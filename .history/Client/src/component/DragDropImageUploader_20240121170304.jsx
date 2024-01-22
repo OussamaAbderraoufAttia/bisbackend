@@ -14,13 +14,11 @@ function DragDropImageUploader() {
   const [notification, setNotification] = useState(null);
   const [response, setResponse] = useState(null);
   const fileInputRef = useRef(null);
-  const [imagesContainerKey, setImagesContainerKey] = useState(0);
 
   useEffect(() => {
     // This effect runs whenever the response changes
     if (response && response.status === 200) {
       setImages([]); // Clear images after successful prediction
-      setImagesContainerKey((prevKey) => prevKey + 1); // Change the key to force re-render
     }
   }, [response]);
 
@@ -49,7 +47,6 @@ function DragDropImageUploader() {
     setImages((prevImages) =>
       prevImages.filter((_, i) => i !== index)
     );
-    setImagesContainerKey((prevKey) => prevKey + 1); // Update the key when deleting an image
   }
 
   function onDragOver(event) {
@@ -86,7 +83,7 @@ function DragDropImageUploader() {
   function uploadImages() {
     if (selectedImage) {
       setIsLoading(true);
-      setResponse(null);
+
       const formData = new FormData();
       formData.append('image', selectedImage);
 
@@ -161,7 +158,7 @@ function DragDropImageUploader() {
           )}
           <input name="file" type="file" className="file hidden" multiple ref={fileInputRef} onChange={onFileSelect} />
         </div>
-        <div className={`container w-full h-auto flex justify-start items-start flex-wrap max-h-52 overflow-y-auto mt-2`} key={imagesContainerKey}>
+        <div className="container w-full h-auto flex justify-start items-start flex-wrap max-h-52 overflow-y-auto mt-2">
           {images.map((image, index) => (
             <div className="image w-20 mr-1 h-20 relative mb-2 p-2 rounded bg-blue-gray-50" key={index}>
               <span

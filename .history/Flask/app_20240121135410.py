@@ -259,45 +259,35 @@ def index():
 
 
 
+
 @app.route('/predict_image', methods=['POST'])
 def predict_image():
-    try:
-        # For internal use: trigger the prediction directly from this endpoint
-        if 'image' not in request.files:
-            return jsonify({'error': 'No image part in the request'})
+    # For internal use: trigger the prediction directly from this endpoint
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image part in the request'})
+    
+    image_file = request.files['image']
+    saved_image_path = "../Client/src/assets/results.tif"
+    
+    input_png_path = "../Client/src/assets/input.png"  # Adjust path as needed
+    results_png_path = "../Client/src/assets/results.png"  # Adjust path as needed
 
-        image_file = request.files['image']
-        saved_image_path = "../Client/src/assets/results.tif"
-        
-        input_png_path = "../Client/src/assets/input.png"  # Adjust path as needed
-        results_png_path = "../Client/src/assets/results.png"  # Adjust path as needed
-
-        input_png_path, results_png_path = predict_and_return_png_paths(image_file, input_png_path, results_png_path)
-       
-        color_threshold = 0.00001  
-        result = detect_tumor_color(saved_image_path, color_threshold)
-        size = calculate_tumor_size(saved_image_path)
-        shape_properties = analyze_tumor_shape(saved_image_path)
-        
-        response = {
-            'status': 200,
-            'message': 'Prediction completed and the results are ready',
-            'image_path': input_png_path,
-            'results_path': results_png_path,
-            'result': result,
-            'size': size,  # Assuming 'size' is a variable holding the tumor size
-            'shape_properties': shape_properties  # Adding the shape properties here
-        }
-
-    except Exception as e:
-        # If an exception occurs, set 'status' to 'error' and include an error message
-        response = {
-            'status': 'error',
-            'message': f'An error occurred: {str(e)}'
-        }
+    input_png_path, results_png_path = predict_and_return_png_paths(image_file, input_png_path, results_png_path)
+   
+    color_threshold = 0.00001  
+    result = detect_tumor_color(saved_image_path, color_threshold)
+    size = calculate_tumor_size(saved_image_path)
+    shape_properties = analyze_tumor_shape(saved_image_path)
+    
+    response = {
+        'message': 'Prediction completed and saved as TIFF image',
+        'image_path': saved_image_path,
+        'result': result,
+        'size': size,  # Assuming 'size' is a variable holding the tumor size
+        'shape_properties': shape_properties  # Adding the shape properties here
+    }
 
     return jsonify(response)
-
 
 if __name__ == '__main__':
     app.run(port=3000, debug=True)

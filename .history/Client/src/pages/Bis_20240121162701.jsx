@@ -14,11 +14,13 @@ export const Bis = () => {
 
   return (
     <div className="w-full min-h-screen font-[poppins] relative">
-      <div className="container relative z-10">
+      <div className="container absolute top-0 left-0 right-0 z-10">
         <Navbar />
       </div>
       <DragDropImageUploader onPredictionResponse={handlePredictionResponse} />
-      
+      {predictionResponse && predictionResponse.status === 200 && (
+        <PlotResults response={predictionResponse} className="absolute top-0 left-0 right-0" />
+      )}
     </div>
   );
 };
